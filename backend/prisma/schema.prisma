@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// The Event model stores all details about the party/meeting
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  date        DateTime
+  location    String
+  capacity    Int
+  bannerUrl   String?  // Optional: For when we add Firebase Storage later
+  createdAt   DateTime @default(now())
+  
+  // This establishes a relationship: An Event can have many RSVPs
+  rsvps       RSVP[]
+}
+
+// The RSVP model acts as the "ticket" connecting a User to an Event
+model RSVP {
+  id        String   @id @default(uuid())
+  name      String   // Attendee's name
+  email     String   // Attendee's email
+  status    String   @default("CONFIRMED") // Can be CONFIRMED or CANCELLED
+  qrCodeUrl String?  // Optional: For the bonus check-in feature later
+  createdAt DateTime @default(now())
+
+  // Relations
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  // Ensures one email can only RSVP once per event
+  @@unique([email, eventId]) 
+}
