@@ -16,25 +16,27 @@ export default function EventCard({ event }: { event: any }) {
   });
 
   const handleRSVP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus({ type: "loading", message: "Generating your ticket..." });
+  e.preventDefault();
+  setStatus({ type: "loading", message: "Generating your ticket..." });
 
-    try {
-      const res = await fetch(`${API_URL}/api/events/${event.id}/rsvp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+  try {
+    // We use the dynamic API_URL and ensure the path is /api/events/[ID]/rsvp
+    const res = await fetch(`${API_URL}/api/events/${event.id}/rsvp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Submission failed");
 
-      setQrCode(data.qrCode);
-      setStatus({ type: "success", message: "You're on the guest list!" });
-    } catch (error: any) {
-      setStatus({ type: "error", message: error.message });
-    }
-  };
+    setQrCode(data.qrCode);
+    setStatus({ type: "success", message: "You're on the guest list!" });
+  } catch (error: any) {
+    console.error("Fetch Error:", error);
+    setStatus({ type: "error", message: error.message });
+  }
+};
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-[32px] p-8 hover:border-emerald-500/50 hover:shadow-[0_0_40px_rgba(16,185,129,0.1)] transition-all duration-500 flex flex-col justify-between min-h-[450px]">
