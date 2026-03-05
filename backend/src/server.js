@@ -19,7 +19,7 @@ app.use(cors({
     origin: [
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
-        "https://rsvp-system-4685-b-sharana-basavas-projects.vercel.app/" // REPLACE THIS with your real Vercel link later
+        "https://rsvp-system-4685.vercel.app" // REPLACE THIS with your real Vercel link later
     ],
     methods: ["GET", "POST"],
     credentials: true
