@@ -6,83 +6,49 @@ const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
 require('dotenv').config();
 
-// --- DATABASE SETUP (Prisma 7 + Neon) ---
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const app = express();
 
-// --- SECURE CORS CONFIGURATION ---
-// IMPORTANT: Once you deploy to Vercel, replace the second link with your actual Vercel URL
+// Cloud URL logic
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+
 app.use(cors({
-    origin: [
-        "http://localhost:3000", 
-        "http://127.0.0.1:3000",
-        "https://rsvp-system-4685.vercel.app" // REPLACE THIS with your real Vercel link later
-    ],
-    methods: ["GET", "POST"],
+    origin: [FRONTEND_URL, "http://localhost:3000", "http://127.0.0.1:3000"],
+    methods: ["GET", "POST", "OPTIONS"],
     credentials: true
-}));
-
+})); 
 app.use(express.json()); 
-
-// --- ROUTES ---
 
 // 1. Fetch All Events
 app.get('/api/events', async (req, res) => {
     try {
-        const events = await prisma.event.findMany({
-            orderBy: { date: 'asc' }
-        });
+        const events = await prisma.event.findMany({ orderBy: { date: 'asc' } });
         res.status(200).json(events);
-    } catch (error) {
-        console.error("Fetch Events Error:", error);
-        res.status(500).json({ error: "Failed to fetch events" });
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to fetch events" }); }
 });
 
-// 2. Process RSVP + Generate QR Ticket
+// 2. RSVP + Generate QR containing a URL
 app.post('/api/events/:id/rsvp', async (req, res) => {
     try {
         const eventId = req.params.id;
         const { name, email } = req.body;
 
-        const event = await prisma.event.findUnique({
-            where: { id: eventId },
-            include: { _count: { select: { rsvps: true } } }
-        });
-
-        if (!event) return res.status(404).json({ error: "Event not found" });
-        
-        if (event._count.rsvps >= event.capacity) {
-            return res.status(400).json({ error: "This event is at full capacity!" });
-        }
-
         const rsvp = await prisma.rSVP.create({
             data: { name, email, eventId }
         });
 
-        // Generate a URL for the QR code that points to the check-in page
-        // In production, 'localhost:3000' should eventually be your Vercel URL
-        const checkInUrl = `http://localhost:3000/check-in/${rsvp.id}`;
+        // The QR code now points to your Live Vercel Check-in link
+        const checkInUrl = `${FRONTEND_URL}/check-in/${rsvp.id}`;
         const qrCodeDataUrl = await QRCode.toDataURL(checkInUrl);
         
-        res.status(201).json({ 
-            message: "RSVP successful!", 
-            rsvp,
-            qrCode: qrCodeDataUrl 
-        });
-
-    } catch (error) {
-        if (error.code === 'P2002') {
-            return res.status(400).json({ error: "This email is already registered." });
-        }
-        res.status(500).json({ error: "Server error" });
-    }
+        res.status(201).json({ rsvp, qrCode: qrCodeDataUrl });
+    } catch (error) { res.status(500).json({ error: "RSVP Failed" }); }
 });
 
-// 3. Admin Check-in Validation
+// 3. New Check-in Validation Route
 app.get('/api/check-in/:rsvpId', async (req, res) => {
     try {
         const { rsvpId } = req.params;
@@ -91,20 +57,11 @@ app.get('/api/check-in/:rsvpId', async (req, res) => {
             include: { event: true }
         });
 
-        if (!rsvp) return res.status(404).json({ error: "Invalid Ticket ID" });
+        if (!rsvp) return res.status(404).json({ error: "Invalid Ticket" });
 
-        res.json({ 
-            name: rsvp.name, 
-            event: rsvp.event.title,
-            status: "Verified" 
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Internal server error" });
-    }
+        res.json({ name: rsvp.name, event: rsvp.event.title });
+    } catch (error) { res.status(500).json({ error: "Server error" }); }
 });
 
-// --- START SERVER ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
