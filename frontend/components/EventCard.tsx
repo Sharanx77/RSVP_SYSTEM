@@ -29,24 +29,18 @@ export default function EventCard({ event }: { event: any }) {
       if (!res.ok) throw new Error(data.error || "Submission failed");
 
       setQrCode(data.qrCode);
-      setStatus({ type: "success", message: "You're on the guest list!" });
+      // We now use the smart message sent directly from the backend
+      setStatus({ type: "success", message: data.message || "You're on the guest list!" });
     } catch (error: any) {
       setStatus({ type: "error", message: error.message });
     }
   };
 
-  // NEW FEATURE: Function to download the QR code image
   const downloadQR = () => {
     if (!qrCode) return;
-    
-    // Create a temporary "invisible" link
     const link = document.createElement("a");
-    link.href = qrCode; // Attach the image data
-    
-    // Name the downloaded file dynamically based on the event title
+    link.href = qrCode;
     link.download = `${event.title.replace(/\s+/g, '_')}_Ticket.png`; 
-    
-    // Click the invisible link to trigger the browser download
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -141,7 +135,6 @@ export default function EventCard({ event }: { event: any }) {
             <img src={qrCode} alt="RSVP QR Code" className="w-44 h-44" />
           </div>
 
-          {/* NEW FEATURE: Download and Close Buttons */}
           <div className="flex flex-col gap-4 w-full px-4">
             <button 
               onClick={downloadQR}
