@@ -1,4 +1,3 @@
-// frontend/app/check-in/[id]/page.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -6,16 +5,28 @@ import { useParams } from "next/navigation";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
 
 export default function CheckInPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id; // Safely grab the ID from the URL
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Safety check: Don't run the fetch if the ID hasn't loaded yet
+    if (!id) return; 
+
     fetch(`${API_URL}/api/check-in/${id}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Server connection failed or invalid ticket.");
+        return res.json();
+      })
       .then((json) => {
         if (json.error) setError(json.error);
         else setData(json);
+      })
+      .catch((err) => {
+        // This prevents the white screen of death on mobile!
+        console.error("Mobile Fetch Error:", err);
+        setError("Network error. Please check your phone's Wi-Fi or cellular connection.");
       });
   }, [id]);
 
@@ -25,8 +36,8 @@ export default function CheckInPage() {
         {error ? (
           <div className="space-y-4">
             <div className="text-5xl">⚠️</div>
-            <h1 className="text-3xl font-bold text-red-400">Invalid Ticket</h1>
-            <p className="text-neutral-500">This QR code does not match any guest in our records.</p>
+            <h1 className="text-3xl font-bold text-red-400">Error</h1>
+            <p className="text-neutral-500">{error}</p>
           </div>
         ) : data ? (
           <div className="space-y-6 animate-in fade-in zoom-in duration-700">
