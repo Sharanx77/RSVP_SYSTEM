@@ -3,7 +3,7 @@
 **Author:** B Sharana Basava  
 **Context:** Web Development Internship Project at Elevate Labs  
 
-[***RSVP SYSTEM***](https://rsvp-system-lime.vercel.app)
+***WEBSITE LINK:***[***RSVP SYSTEM***](https://rsvp-system-lime.vercel.app)
 
 ## 📌 Project Overview
 A full-stack, cloud-native event management and ticketing platform. This system allows users to browse curated events, seamlessly RSVP, and instantly receive a dynamic QR code ticket. It includes an admin check-in interface designed for mobile scanners at the door to validate guests against a live cloud database.
