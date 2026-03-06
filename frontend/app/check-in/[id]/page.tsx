@@ -6,12 +6,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
 
 export default function CheckInPage() {
   const params = useParams();
-  const id = params?.id; // Safely grab the ID from the URL
+  const id = params?.id; 
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Safety check: Don't run the fetch if the ID hasn't loaded yet
     if (!id) return; 
 
     fetch(`${API_URL}/api/check-in/${id}`)
@@ -24,14 +23,14 @@ export default function CheckInPage() {
         else setData(json);
       })
       .catch((err) => {
-        // This prevents the white screen of death on mobile!
         console.error("Mobile Fetch Error:", err);
-        setError("Network error. Please check your phone's Wi-Fi or cellular connection.");
+        setError("Network error. Please check your connection.");
       });
   }, [id]);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 text-white text-center">
+    // FIX 1: Changed min-h-screen to min-h-[100dvh] for mobile address bars
+    <div className="min-h-[100dvh] bg-black flex items-center justify-center p-6 text-white text-center">
       <div className="max-w-md w-full bg-neutral-900 border border-emerald-500/30 p-10 rounded-[40px] shadow-[0_0_50px_rgba(16,185,129,0.1)]">
         {error ? (
           <div className="space-y-4">
@@ -40,7 +39,8 @@ export default function CheckInPage() {
             <p className="text-neutral-500">{error}</p>
           </div>
         ) : data ? (
-          <div className="space-y-6 animate-in fade-in zoom-in duration-700">
+          // FIX 2: Removed the opacity animation that was freezing Chrome
+          <div className="space-y-6">
             <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl">✅</div>
             <h1 className="text-4xl font-black tracking-tighter uppercase">Access Granted</h1>
             <div className="space-y-1">
